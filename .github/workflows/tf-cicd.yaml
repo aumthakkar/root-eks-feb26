@@ -84,7 +84,6 @@ jobs:
 
   destroy:
     if: github.event.name == 'destroy' && github.event.inputs.action == 'destroy'
-    needs: apply
     runs-on: ubuntu-latest
     environment: destroy-approval
     steps:
