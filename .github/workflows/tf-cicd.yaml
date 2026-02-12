@@ -50,7 +50,7 @@ jobs:
           path: tfplan
 
   apply:
-    if: github.event.name == 'workflow_dispatch' && inputs.action == 'apply'
+    if: inputs.action == 'apply'
     needs: plan
     runs-on: ubuntu-latest
     environment: apply-approval
