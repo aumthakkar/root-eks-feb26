@@ -78,7 +78,7 @@ jobs:
 
       - name: TF apply
         run: |
-          terraform init -upgrade -input=false
+          terraform init -input=false
           terraform apply -auto-approve tfplan
 
   destroy:
@@ -103,7 +103,7 @@ jobs:
 
       - name: Terraform destroy
         run: |
-          terraform init -upgrade -input=false
+          terraform init -input=false
           terraform destroy -auto-approve
 
 
