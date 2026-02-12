@@ -15,7 +15,7 @@ module "eks_cluster_feb26" {
   eks_version  = "1.32"
   cluster_name = "pht-dev-eks-cluster"
 
-  public_acccess_cidrs = ["2.126.24.247/32"]
+  public_acccess_cidrs = ["0.0.0.0/0"]
 
   service_ipv4_cidr = "172.20.0.0/16"
 
@@ -34,5 +34,7 @@ module "eks_cluster_feb26" {
   nodegroup_max_size     = 1
 
   max_unavailable_percentage = 50
+
+  create_ebs_controller = false
 
 }
