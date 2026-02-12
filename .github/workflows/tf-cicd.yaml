@@ -5,7 +5,15 @@ on:
       - main
   workflow_dispatch:
     inputs:
-
+      action:
+        description: Manual trigger
+        default: destroy
+        required: true
+        type: choice
+        options:
+            - plan
+            - apply
+            - destroy
     
 env:
   TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
@@ -20,12 +28,90 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "eu-north-1"
 
+      - name: Checkout Code
+        uses: actions/checkout@v6
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.terraform_version }}
+
+      - name: Terraform init, validate, plan
+        run: |
+          terraform init
+          terraform validate
+          terraform plan -input=false -out=tfplan
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: tfplan
+          path: tfplan
+
+  apply:
+    needs: plan
+    if: github.event.name == 'workflow_dispatch' && github.event.inputs.action == 'apply'
+    runs-on: ubuntu-latest
+    environment: apply-approval
+    steps:
+      - name: Setup AWS
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-north-1
+
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.terraform_version }}
+
+      - name: Download tfplan artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: tfplan
+          path: .
+
+      - name: TF apply
+        run: |
+          terraform init upgrade -input=false
+          terraform apply -auto-approve tfplan
+
+  destroy:
+    if: github.event.name == 'destroy' && github.event.inputs.action == 'destroy'
+    needs: apply
+    runs-on: ubuntu-latest
+    environment: destroy-approval
+    steps:
+      - name: Setup AWS
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "eu-north-1"
+
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.terraform_version }}
+
+      - name: Terraform destroy
+        run: |
+          terraform init upgrade -input=false
+          terraform destroy -auto-approve
+
+
+
+      
+
 
     
     
