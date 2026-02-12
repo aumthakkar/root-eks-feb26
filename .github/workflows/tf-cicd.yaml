@@ -78,11 +78,11 @@ jobs:
 
       - name: TF apply
         run: |
-          terraform init upgrade -input=false
+          terraform init -upgrade -input=false
           terraform apply -auto-approve tfplan
 
   destroy:
-    if: github.event.name == 'destroy' && github.event.inputs.action == 'destroy'
+    if: inputs.action == 'destroy'
     runs-on: ubuntu-latest
     environment: destroy-approval
     steps:
@@ -103,7 +103,7 @@ jobs:
 
       - name: Terraform destroy
         run: |
-          terraform init upgrade -input=false
+          terraform init -upgrade -input=false
           terraform destroy -auto-approve
 
 
