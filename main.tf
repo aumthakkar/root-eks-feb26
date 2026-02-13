@@ -36,6 +36,7 @@ module "eks_cluster_feb26" {
   max_unavailable_percentage = 50
 
   create_ebs_controller = false
-  create_lbc_controller = true
+  create_lbc_controller = false
+  create_cloudwatch_controller = true
 
 }
