@@ -37,6 +37,6 @@ module "eks_cluster_feb26" {
 
   create_ebs_controller        = false
   create_lbc_controller        = false
-  create_cloudwatch_controller = true
+  create_cloudwatch_controller = false
 
 }

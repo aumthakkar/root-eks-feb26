@@ -1,50 +1,53 @@
-name: Terraform plan
+name: TF EKS-Feb26 CICD Pipeline
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
   workflow_dispatch:
     inputs:
       action:
-        description: Manual trigger
+        description: Manual trigger of jobs
         default: destroy
         required: true
         type: choice
         options:
-            - plan
-            - apply
-            - destroy
+          - apply
+          - destroy
+
 env:
-  TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
-  TF_VERSION: "1.14.3" 
+  TF_TOKEN_app_terraform_io: ${{ secrets.TF_TOKEN }}
+  # TF_VERSION: "1.14.5" Using latest instead in the setup-terraform action.
 
 jobs:
   plan:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup AWS
-        uses: aws-actions/configure-aws-credentials@v6
+      - name: Setup AWS Access
+        uses: aws-actions/configure-aws-credentials
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: "eu-north-1"
-
-      - name: Checkout Code
-        uses: actions/checkout@v6
+          aws-region: eu-north-1
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: ${{ env.terraform_version }}
+          terraform_version: latest 
 
-      - name: Terraform init, validate, plan
+      - name: Checkout your GitHub code
+        uses: actions/checkout@v6
+
+      - name: Terraform init, validate and plan
         run: |
           terraform init
           terraform validate
           terraform plan -input=false -out=tfplan
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v5
+      - name: Upload the tfplan artifact
+        uses: actions/upload-artifact@v6
         with:
           name: tfplan
           path: tfplan
@@ -55,30 +58,30 @@ jobs:
     runs-on: ubuntu-latest
     environment: apply-approval
     steps:
-      - name: Setup AWS
-        uses: aws-actions/configure-aws-credentials@v6
+      - name: Setup AWS Access
+        uses: aws-actions/configure-aws-credentials
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-north-1
 
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: ${{ env.terraform_version }}
+          terraform_version: latest 
+
+      - name: Checkout your GitHub code
+        uses: actions/checkout@v6
 
       - name: Download tfplan artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: tfplan
           path: .
 
-      - name: TF apply
+      - name: Terraform init and apply
         run: |
-          terraform init -input=false
+          terraform init
           terraform apply -auto-approve tfplan
 
   destroy:
@@ -86,30 +89,27 @@ jobs:
     runs-on: ubuntu-latest
     environment: destroy-approval
     steps:
-      - name: Setup AWS
-        uses: aws-actions/configure-aws-credentials@v6
+      - name: Setup AWS Access
+        uses: aws-actions/configure-aws-credentials
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: "eu-north-1"
-
-      - name: Checkout Code
-        uses: actions/checkout@v6
+          aws-region: eu-north-1
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: ${{ env.terraform_version }}
+          terraform_version: latest 
 
-      - name: Terraform destroy
+      - name: Checkout your GitHub code
+        uses: actions/checkout@v6
+
+      - name: Terraform init and destroy
         run: |
-          terraform init -input=false
-          terraform destroy -auto-approve
-
-
-
-      
-
-
+          terraform init
+          terraform destroy -auto-approve 
     
-    
+
+
+
+        
